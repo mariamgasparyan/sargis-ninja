@@ -1,0 +1,5 @@
+# original phone videos and the old clip that shows his face stay private
+*.MOV
+*.mov
+sargis-chop.mp4
+.DS_Store
