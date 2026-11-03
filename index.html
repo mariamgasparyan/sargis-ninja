@@ -211,7 +211,7 @@ const Music = {
 
 // ---------- heroes ----------
 const HERO_LIST = [
-  { id:'sargis', name:'Sargis', title:'The Real Ninja', color:'#1c1c22', dark:'#0e0e12', belt:'#1c1c22', armor:'#2fd06a', elem:'#3dff8a', skin:'#f1c9a6', hair:'#5a3a22', power:'Ninja Chop', desc:'His own karate chop, from high above!' },
+  { id:'sargis', name:'Sargis', title:'The Real Ninja', color:'#1c1c22', dark:'#0e0e12', belt:'#1c1c22', armor:'#2fd06a', elem:'#3dff8a', skin:'#f1c9a6', hair:'#5a3a22', power:'Ninja Punch', desc:'His own straight punch, from his video!' },
   { id:'lloyd', name:'Lloyd', title:'The Green Ninja', color:'#2a9d48', dark:'#17522a', belt:'#d9a62e', armor:'#d9a62e', elem:'#8dff5a', skin:'#f2c9a0', hair:'#c9a24a', power:'Green Energy', desc:'Big blasts that fly through enemies!' },
   { id:'kai',   name:'Kai',   title:'Ninja of Fire',   color:'#c8282a', dark:'#6e1212', belt:'#2a2222', armor:'#7a1414', elem:'#ff8a1f', skin:'#e8b48a', hair:'#4a2a14', spiky:true, power:'Fire', desc:'Extra strong sword!' },
   { id:'nya',   name:'Nya',   title:'Ninja of Water',  color:'#2a62c9', dark:'#14316e', belt:'#8fd0ff', armor:'#173f8f', elem:'#4fd6ff', skin:'#d9a07a', hair:'#1a1a1a', power:'Water', desc:'Pushes enemies far away!' },
@@ -280,7 +280,7 @@ function drawHero(h, x, y, o){
     case 'down': lf = [0.1, 0.1]; lb = [-0.1, 0.15]; af = [-0.4, 0.2]; ab = [0.3, 0.3]; lean = 0; bob = 0; break;
   }
   if (atk !== undefined){ af = [3.9 - atk * 3.0, -0.1]; ab = [-0.5 + atk * 0.6, 0.9]; lean = 0.1 + atk * 0.1; if (!o.walk && !o.air){ lf = [0.5, 0.45]; lb = [-0.4, 0.3]; } }
-  if (atk !== undefined && h.id === 'sargis'){ af = [3.15 - atk * 1.55, 0]; ab = [0.4, 2.4]; }
+  if (atk !== undefined && h.id === 'sargis'){ const pz = chopPose(0.3 + atk * 0.95, PUNCH); af = pz.af; ab = pz.ab; lean = pz.lean; }
   const hy = -36 + bob + drop, sx = Math.sin(lean) * 23, sy = hy - Math.cos(lean) * 23;
   const headX = Math.sin(lean) * 35, headY = hy - Math.cos(lean) * 35;
   if (h.id === 'sponge'){ drawSponge(h, o, t, lf, lb, af, ab, lean, hy, atk); ctx.restore(); return; }
@@ -628,7 +628,8 @@ function drawSuperHero(h, o, t, lf, lb, af, ab, lean, hy, atk){
     else if (c.weapon === 'yoyo'){ const tp = seg(hd[0], hd[1], hd[2], 34); sline([hd[0], hd[1], tp[0], tp[1]], 1, '#dddddd'); ctx.fillStyle = '#d42a2a'; circle(tp[0], tp[1], 6); ctx.fillStyle = '#111'; circle(tp[0] - 2, tp[1] - 2, 1.4); circle(tp[0] + 2, tp[1] + 1.5, 1.4); }
     else if (c.weapon === 'staff'){ const b0 = seg(hd[0], hd[1], hd[2] + Math.PI, 14), tp = seg(hd[0], hd[1], hd[2], 40); sline([b0[0], b0[1], tp[0], tp[1]], 3.5, '#5a5a6a'); ctx.fillStyle = '#3ad0c8'; circle(tp[0], tp[1], 4.5); }
     else { ctx.fillStyle = 'rgba(255,255,255,0.35)'; circle(hd[0], hd[1], c.wide ? 11 : 8); }
-    if (atk > 0.12 && atk < 0.8){ ctx.globalAlpha = 1 - atk; ctx.strokeStyle = h.elem; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(sx, sy, c.wide ? 58 : 50, -1.7, -1.7 + atk * 2.6); ctx.stroke(); ctx.globalAlpha = 1; }
+    if (c.punch && atk > 0.15 && atk < 0.7){ ctx.globalAlpha = 1 - atk; for (let k = 0; k < 3; k++) sline([hd[0] + 4, hd[1] - 4 + k * 4, hd[0] - 14 + k * 3, hd[1] - 4 + k * 4], 2.5, h.elem); ctx.globalAlpha = 1; }
+    else if (!c.punch && atk > 0.12 && atk < 0.8){ ctx.globalAlpha = 1 - atk; ctx.strokeStyle = h.elem; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(sx, sy, c.wide ? 58 : 50, -1.7, -1.7 + atk * 2.6); ctx.stroke(); ctx.globalAlpha = 1; }
   }
   if (o.kick && o.kick !== 'foot'){ const ft = seg(2, hy, lf[0], 36), kg = ctx.createRadialGradient(ft[0], ft[1], 1, ft[0], ft[1], 20); kg.addColorStop(0, '#fff'); kg.addColorStop(0.4, h.elem); kg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = kg; circle(ft[0], ft[1], 20); }
 }
@@ -4026,7 +4027,7 @@ drawFinFx2 = function(){
 
 // ---------- Sargis: the real ninja, drawn from his own videos ----------
 // his green ninja costume, from his second video
-SUPER.sargis = { leg:'#22b45a', boot:'#141418', torso:'#1c1c22', arm:'#1c1c22', hand:'#2a2a30', cuff:'#22863f', belt:'#1c1c22', head:'sargisninja', hair:'#17171c', emblem:'greenarmor', tabard:'#22b45a' };
+SUPER.sargis = { leg:'#22b45a', boot:'#141418', torso:'#1c1c22', arm:'#1c1c22', hand:'#2a2a30', cuff:'#22863f', belt:'#1c1c22', head:'sargisninja', hair:'#17171c', emblem:'greenarmor', tabard:'#22b45a', punch:true };
 SHOT.sargis = { spd:640, r:10, dmg:1.4 };
 DRAGON_COL.sargis = ['#1c1c22', '#2fd06a']; BREATH_COL.sargis = ['#3dff8a', '#2fd06a', '#ffffff'];
 VEH.sargis = ['car', '#1c1c22', '#2fd06a']; ROCKET_WORD.sargis = 'HI-YAH!';
@@ -4573,6 +4574,29 @@ function updateCursor(){
   ctx.restore();
 }
 
+// ---------- key hints always on screen when playing with a keyboard ----------
+function keyHintLines(){
+  if (state === 'race') return [['P1  W S lane · D faster · F shoot · H rocket · G nitro', 0], ['P2  ↑ ↓ lane · → faster · K shoot · J rocket · L nitro', 1]].slice(0, numPlayers);
+  const out = [['P1  A D move · W jump · F attack · H kick (hold: super) · C shoot', 0], ['G spin · T team · R dragon · E ship · S block · P pause', 0]];
+  if (numPlayers === 2) out.push(['P2  ← → move · ↑ jump · K attack · J kick (hold: super) · ; shoot', 1], ['L spin · O team · I dragon · U ship · ↓ block', 1]);
+  return out;
+}
+function drawKeyHints(){
+  const lines = keyHintLines(), lh = 14, pw = 440, x = W - pw - 8, y = H - lines.length * lh - 10;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'; rr(x, y, pw, lines.length * lh + 8, 8);
+  lines.forEach(([t, i], k) => txt(t, x + 8, y + 11 + k * lh, 11, PCOL[i], 'left', '#000', pw - 16));
+}
+const drawTouchBase = drawTouch;
+drawTouch = function(){ drawTouchBase(); if (!touchUsed && !paused && !cutin && state !== 'dialog') drawKeyHints(); };
+Object.assign(HY, {
+  "P1  W S lane · D faster · F shoot · H rocket · G nitro": "P1  W S գիծ · D ավելի արագ · F կրակել · H հրթիռ · G նիտրո",
+  "P2  ↑ ↓ lane · → faster · K shoot · J rocket · L nitro": "P2  ↑ ↓ գիծ · → ավելի արագ · K կրակել · J հրթիռ · L նիտրո",
+  "P1  A D move · W jump · F attack · H kick (hold: super) · C shoot": "P1  A D քայլել · W ցատկ · F հարված · H ոտք (պահիր՝ սուպեր) · C կրակել",
+  "G spin · T team · R dragon · E ship · S block · P pause": "G պտույտ · T թիմ · R վիշապ · E նավ · S պաշտպան · P դադար",
+  "P2  ← → move · ↑ jump · K attack · J kick (hold: super) · ; shoot": "P2  ← → քայլել · ↑ ցատկ · K հարված · J ոտք (պահիր՝ սուպեր) · ; կրակել",
+  "L spin · O team · I dragon · U ship · ↓ block": "L պտույտ · O թիմ · I վիշապ · U նավ · ↓ պաշտպան",
+  "Ninja Punch": "Նինջա բռունցք", "His own straight punch, from his video!": "Իր սեփական բռունցքի հարվածը՝ իր տեսանյութից!",
+});
 // ---------- browser tab icon: cartoon Sargis's ninja head ----------
 (function makeFavicon(){
   try {
