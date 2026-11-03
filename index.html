@@ -4209,9 +4209,9 @@ function afterBossWin(){
 }
 
 // ---------- languages: Armenian / English ----------
-// Armenian unless English was picked with the switch on the home screen
-let LANG = 'hy';
-try { LANG = localStorage.getItem('nh-lang') === 'en' ? 'en' : 'hy'; } catch (e) {}
+// English unless Armenian was picked with the switch on the home screen
+let LANG = 'en';
+try { LANG = localStorage.getItem('nh-lang') === 'hy' ? 'hy' : 'en'; } catch (e) {}
 const HY = {
   // heroes
   "Sargis": "Սարգիս", "The Real Ninja": "Իսկական նինջա", "Ninja Chop": "Նինջա հարված", "His own karate chop, from high above!": "Իր սեփական կարատե հարվածը՝ վերևից!",
