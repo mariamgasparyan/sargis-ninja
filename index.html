@@ -4212,7 +4212,7 @@ function afterBossWin(){
 // ---------- languages: Armenian / English ----------
 // English unless Armenian was picked with the switch on the home screen
 let LANG = 'en';
-try { LANG = localStorage.getItem('nh-lang') === 'hy' ? 'hy' : 'en'; } catch (e) {}
+try { LANG = localStorage.getItem('nh-lang-v2') === 'hy' ? 'hy' : 'en'; } catch (e) {}
 const HY = {
   // heroes
   "Sargis": "Սարգիս", "The Real Ninja": "Իսկական նինջա", "Ninja Chop": "Նինջա հարված", "His own karate chop, from high above!": "Իր սեփական կարատե հարվածը՝ վերևից!",
@@ -4400,7 +4400,7 @@ function tr(s){
   if (trCache.size > 4000) trCache.clear();
   trCache.set(s, r); return r;
 }
-function setLang(l){ LANG = l; trCache.clear(); try { localStorage.setItem('nh-lang', l); } catch (e) {} }
+function setLang(l){ LANG = l; trCache.clear(); try { localStorage.setItem('nh-lang-v2', l); } catch (e) {} }
 
 // ---------- Legendary: fill the True Ninja bar and your heroes become legends ----------
 let legends = new Set();
