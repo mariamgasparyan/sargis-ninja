@@ -4805,6 +4805,76 @@ Object.assign(HY, {
   "Choose your mission ▶": "Ընտրիր առաքելությունը ▶", "Tap the button": "Հպիր կոճակին", "Press Space or Enter": "Սեղմիր Space կամ Enter",
   "READY!": "ՊԱՏՐԱՍՏ!", "Key F": "F ստեղն", "Key K": "K ստեղն", "Key V": "V ստեղն", "Key N": "N ստեղն", "Press F fast (or hold F)": "Արագ սեղմիր F (կամ պահիր F)", "Press K fast (or hold K)": "Արագ սեղմիր K (կամ պահիր K)", "ATTACK button": "ATTACK կոճակ", "Tap ATTACK fast": "Արագ հպիր ATTACK", "WHEEL button": "ԱՍՏՂԻԿ կոճակ", "Lu Kang:  V cartwheel": "Լու Կանգ՝  V աստղիկ", "Lu Kang:  N cartwheel": "Լու Կանգ՝  N աստղիկ", "WHEEL": "ԱՍՏՂԻԿ",
 });
+// ---------- Math break: every minute of play a first-grade sum pops up, a right answer gives studs and power ----------
+const MATH_FIRST = 40, MATH_EVERY = 60;
+let mathQ = null, mathClock = MATH_FIRST;
+const mRand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const MATH_BTN = i => ({ x: W / 2 - 205 + i * 150, y: 316, w: 110, h: 76 });
+function newMathQ(){
+  let a, b, op, ans;
+  if (Math.random() < 0.55){ ans = mRand(2, 10); a = mRand(0, ans); b = ans - a; op = '+'; }
+  else { a = mRand(2, 10); b = mRand(0, a); ans = a - b; op = '−'; }
+  const opts = [ans];
+  while (opts.length < 3){ const w = ans + pick([-3, -2, -1, 1, 2, 3]); if (w >= 0 && w <= 12 && !opts.includes(w)) opts.push(w); }
+  opts.sort(() => Math.random() - 0.5);
+  return { a, b, op, ans, opts, wrong: -1, wrongT: 0, okT: 0, t: 0 };
+}
+function updateMath(dt){
+  const q = mathQ; q.t += dt; q.wrongT -= dt;
+  if (q.okT > 0){ q.okT -= dt; if (q.okT <= 0) mathQ = null; return; }
+  let pickI = -1;
+  ['Digit1', 'Digit2', 'Digit3'].forEach((k, i) => { if (pressed[k] || pressed['Numpad' + (i + 1)]) pickI = i; });
+  if (clicked) for (let i = 0; i < 3; i++) if (inBtn(MATH_BTN(i), clicked)) pickI = i;
+  if (pickI < 0 || q.t < 0.4) return;
+  if (q.opts[pickI] === q.ans){
+    q.okT = 1.4; q.right = pickI; SFX.win();
+    studs += 100; mstats.studs += 100;
+    for (let k = 0; k < 4; k++) flyStud(W / 2 - 60 + k * 40, 330, k ? 0 : 1, k * 0.08);
+    players.forEach(p => { p.spin = Math.min(100, p.spin + 25); });
+  } else { q.wrong = pickI; q.wrongT = 0.6; SFX.hurt(); }
+}
+function drawMathCounters(n, x, y, col){
+  // little studs to count with: rows of five
+  for (let k = 0; k < n; k++){ const cx = x + (k % 5) * 18 - (Math.min(n, 5) - 1) * 9, cy = y + Math.floor(k / 5) * 18; ctx.fillStyle = col; circle(cx, cy, 7); ctx.fillStyle = 'rgba(255,255,255,0.6)'; circle(cx - 2, cy - 2, 2.4); }
+}
+function drawMath(){
+  const q = mathQ;
+  ctx.fillStyle = 'rgba(0,0,20,0.72)'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#20204a'; rr(W / 2 - 300, 40, 600, 400, 24); ctx.strokeStyle = '#ffe14a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(W / 2 - 300, 40, 600, 400, 24); ctx.stroke();
+  txt('MATH TIME!', W / 2, 78, 34, '#ffe14a');
+  [q.a, q.op, q.b, '=', '?'].forEach((c, i) => txt(String(c), W / 2 + (i - 2) * 105, 140, 56, '#fff'));
+  // counters under each number help with counting
+  drawMathCounters(q.a, W / 2 - 210, 196, '#ffd23a');
+  if (q.op === '+') drawMathCounters(q.b, W / 2, 196, '#5ad0ff');
+  else { drawMathCounters(q.b, W / 2, 196, '#ff6a6a'); txt('take away', W / 2, 250, 13, '#ff9a9a'); }
+  for (let i = 0; i < 3; i++){
+    const b = MATH_BTN(i), right = q.okT > 0 && q.right === i, bad = q.wrong === i && q.wrongT > 0, shake = bad ? Math.sin(q.wrongT * 60) * 6 : 0;
+    ctx.fillStyle = right ? '#2fd06a' : bad ? '#d42a3a' : '#3a5ad0'; rr(b.x + shake, b.y, b.w, b.h, 16);
+    txt(String(q.opts[i]), b.x + b.w / 2 + shake, b.y + b.h / 2 - 4, 40, '#fff');
+    if (!touchUsed) txt(String(i + 1), b.x + 14 + shake, b.y + 14, 12, '#cfe0ff');
+  }
+  if (q.okT > 0) txt('GREAT JOB!  +100 studs, +power', W / 2, 418, 22, '#7aff9a');
+  else if (q.wrongT > 0) txt('Try again!', W / 2, 418, 22, '#ff9a9a');
+  else txt(touchUsed ? 'Tap the right answer' : 'Press 1, 2 or 3 (or click the answer)', W / 2, 418, 16, '#cfe8ff');
+}
+const updatePlayMath = updatePlay;
+updatePlay = function(dt){
+  if (mathQ){ updateMath(dt); return; }
+  if (!paused && !cutin && !bossE){ mathClock -= dt; if (mathClock <= 0){ mathClock = MATH_EVERY; mathQ = newMathQ(); return; } }
+  updatePlayMath(dt);
+};
+const touchControlsOnMath = touchControlsOn;
+touchControlsOn = function(){ return !mathQ && touchControlsOnMath(); };
+const drawTouchMath = drawTouch;
+drawTouch = function(){ if (mathQ && state === 'play'){ drawMath(); return; } drawTouchMath(); };
+const clickablesMath = clickables;
+clickables = function(){ return mathQ && state === 'play' && !paused ? [0, 1, 2].map(MATH_BTN) : clickablesMath(); };
+const loadLevelMath = loadLevel;
+loadLevel = function(i){ mathQ = null; loadLevelMath(i); };
+Object.assign(HY, {
+  "MATH TIME!": "ՄԱԹԵՄԱՏԻԿԱՅԻ ԺԱՄԱՆԱԿ!", "take away": "հանել", "GREAT JOB!  +100 studs, +power": "ԱՊՐԵՍ!  +100 մետաղադրամ, +ուժ",
+  "Try again!": "Նորից փորձիր!", "Tap the right answer": "Հպիր ճիշտ պատասխանին", "Press 1, 2 or 3 (or click the answer)": "Սեղմիր 1, 2 կամ 3 (կամ սեղմիր պատասխանին)",
+});
 // ---------- main loop ----------
 let last = performance.now();
 function frame(now){
