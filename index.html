@@ -76,8 +76,8 @@ cv.addEventListener('click', e => {
   clicked = { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height };
 });
 const CONTROLS = [
-  { left:['KeyA'], right:['KeyD'], down:['KeyS'], jump:['KeyW','Space'], attack:['KeyF'], special:['KeyG'], kick:['KeyH'], dragon:['KeyR'], team:['KeyT'], bounty:['KeyE'], shoot:['KeyC'] },
-  { left:['ArrowLeft'], right:['ArrowRight'], down:['ArrowDown'], jump:['ArrowUp'], attack:['KeyK','Period'], special:['KeyL','Slash'], kick:['KeyJ','Comma'], dragon:['KeyI'], team:['KeyO'], bounty:['KeyU'], shoot:['Semicolon'] },
+  { left:['KeyA'], right:['KeyD'], down:['KeyS'], jump:['KeyW','Space'], attack:['KeyF'], special:['KeyG'], kick:['KeyH'], dragon:['KeyR'], team:['KeyT'], bounty:['KeyE'], shoot:['KeyC'], cart:['KeyV'] },
+  { left:['ArrowLeft'], right:['ArrowRight'], down:['ArrowDown'], jump:['ArrowUp'], attack:['KeyK','Period'], special:['KeyL','Slash'], kick:['KeyJ','Comma'], dragon:['KeyI'], team:['KeyO'], bounty:['KeyU'], shoot:['Semicolon'], cart:['KeyN'] },
 ];
 const padPrev = [{}, {}], padNow = [null, null];
 function pollPads(){
@@ -214,6 +214,7 @@ const Music = {
 // ---------- heroes ----------
 const HERO_LIST = [
   { id:'sargis', name:'Sargis', title:'The Real Ninja', color:'#1c1c22', dark:'#0e0e12', belt:'#1c1c22', armor:'#2fd06a', elem:'#3dff8a', skin:'#f1c9a6', hair:'#5a3a22', power:'Ninja Punch', desc:'His own straight punch, from his video!' },
+  { id:'lukang', name:'Lu Kang', title:'The Dragon Fist', color:'#e8b892', dark:'#3a5a8a', belt:'#d42a3a', armor:'#d42a3a', elem:'#ff4a5a', skin:'#e8b892', hair:'#1a1210', power:'Nunchaku', desc:'Nunchaku, fast punches and a cartwheel, from his videos!' },
   { id:'lloyd', name:'Lloyd', title:'The Green Ninja', color:'#2a9d48', dark:'#17522a', belt:'#d9a62e', armor:'#d9a62e', elem:'#8dff5a', skin:'#f2c9a0', hair:'#c9a24a', power:'Green Energy', desc:'Big blasts that fly through enemies!' },
   { id:'kai',   name:'Kai',   title:'Ninja of Fire',   color:'#c8282a', dark:'#6e1212', belt:'#2a2222', armor:'#7a1414', elem:'#ff8a1f', skin:'#e8b48a', hair:'#4a2a14', spiky:true, power:'Fire', desc:'Extra strong sword!' },
   { id:'nya',   name:'Nya',   title:'Ninja of Water',  color:'#2a62c9', dark:'#14316e', belt:'#8fd0ff', armor:'#173f8f', elem:'#4fd6ff', skin:'#d9a07a', hair:'#1a1a1a', power:'Water', desc:'Pushes enemies far away!' },
@@ -238,7 +239,7 @@ const HERO_LIST = [
   { id:'pixal', name:'Pixal', title:'Nindroid Ninja', color:'#c8d0d8', dark:'#4a5460', belt:'#3aff9a', armor:'#3aff9a', elem:'#3aff9a', skin:'#d8dee4', power:'Data Laser', desc:'Fast robot lasers!' },
 ];
 // mixed order for the select screen, so ninjas, superheroes and girl heroes are spread across every row
-const HERO_ORDER = ['sargis', 'lloyd', 'elsa', 'batman', 'nya', 'spidey', 'ladybug', 'kai', 'pikachu', 'wonder', 'zane', 'hulk', 'moana', 'sponge', 'marvel', 'raph', 'gwen', 'wu', 'ironman', 'pixal', 'superman', 'rabbid', 'sora'];
+const HERO_ORDER = ['sargis', 'lukang', 'lloyd', 'elsa', 'batman', 'nya', 'spidey', 'ladybug', 'kai', 'pikachu', 'wonder', 'zane', 'hulk', 'moana', 'sponge', 'marvel', 'raph', 'gwen', 'wu', 'ironman', 'pixal', 'superman', 'rabbid', 'sora'];
 HERO_LIST.sort((a, b) => HERO_ORDER.indexOf(a.id) - HERO_ORDER.indexOf(b.id));
 const HERO = {}; HERO_LIST.forEach(h => HERO[h.id] = h);
 const PCOL = ['#ffe14a', '#5ff3ff'];
@@ -282,6 +283,17 @@ function drawHero(h, x, y, o){
     case 'down': lf = [0.1, 0.1]; lb = [-0.1, 0.15]; af = [-0.4, 0.2]; ab = [0.3, 0.3]; lean = 0; bob = 0; break;
   }
   if (atk !== undefined){ af = [3.9 - atk * 3.0, -0.1]; ab = [-0.5 + atk * 0.6, 0.9]; lean = 0.1 + atk * 0.1; if (!o.walk && !o.air){ lf = [0.5, 0.45]; lb = [-0.4, 0.3]; } }
+  if (o.cart !== undefined){
+    // Lu Kang's cartwheel: arms and legs straight out, rolling over his hip, from his third video
+    lf = [0.6, 0]; lb = [-0.6, 0]; af = [2.72, 0]; ab = [3.56, 0]; lean = 0; bob = 0; drop = 0;
+    lkCartPivot(o.cart);
+  }
+  if (atk !== undefined && o.punch){
+    // Lu Kang's fast punches: guard, then one arm shoots straight out
+    const u = Math.sin(Math.min(1, atk * 1.4) * Math.PI);
+    af = [1.0, 2.1]; ab = [0.75, 2.2]; lean = 0.08 + u * 0.04;
+    if (o.punch === 1) af = [1.0 + u * 0.57, 2.1 - u * 2.1]; else ab = [0.75 + u * 0.82, 2.2 - u * 2.2];
+  }
   if (atk !== undefined && h.id === 'sargis'){ const pz = chopPose(0.3 + atk * 0.95, PUNCH); af = pz.af; ab = pz.ab; lean = pz.lean; }
   const hy = -36 + bob + drop, sx = Math.sin(lean) * 23, sy = hy - Math.cos(lean) * 23;
   const headX = Math.sin(lean) * 35, headY = hy - Math.cos(lean) * 35;
@@ -628,10 +640,11 @@ function drawSuperHero(h, o, t, lf, lb, af, ab, lean, hy, atk){
     if (c.weapon === 'sword'){ const p1 = seg(hd[0], hd[1], hd[2], 6), p2 = seg(hd[0], hd[1], hd[2], 40); sline([hd[0], hd[1], p1[0], p1[1]], 3.5, '#8a6a1a'); sline([p1[0], p1[1], p2[0], p2[1]], 3.4, '#dfe6ee'); }
     else if (c.weapon === 'oar'){ const b0 = seg(hd[0], hd[1], hd[2] + Math.PI, 12), tp = seg(hd[0], hd[1], hd[2], 34); sline([b0[0], b0[1], tp[0], tp[1]], 3, '#8a5a2a'); ctx.save(); ctx.translate(tp[0], tp[1]); ctx.rotate(-hd[2]); ctx.fillStyle = '#8a5a2a'; ell(0, 7, 4.5, 10); ctx.restore(); }
     else if (c.weapon === 'yoyo'){ const tp = seg(hd[0], hd[1], hd[2], 34); sline([hd[0], hd[1], tp[0], tp[1]], 1, '#dddddd'); ctx.fillStyle = '#d42a2a'; circle(tp[0], tp[1], 6); ctx.fillStyle = '#111'; circle(tp[0] - 2, tp[1] - 2, 1.4); circle(tp[0] + 2, tp[1] + 1.5, 1.4); }
+    else if (c.weapon === 'nunchaku' && !o.punch){ const p1 = seg(hd[0], hd[1], hd[2], 11), a2 = hd[2] - 1.4 + Math.sin(atk * 12) * 0.8, c1 = seg(p1[0], p1[1], a2, 4), p2 = seg(c1[0], c1[1], a2, 11); sline([hd[0], hd[1], p1[0], p1[1]], 3.4, '#2a1a10'); sline([p1[0], p1[1], c1[0], c1[1]], 1.2, '#c8c8d0'); sline([c1[0], c1[1], p2[0], p2[1]], 3.4, '#2a1a10'); }
     else if (c.weapon === 'staff'){ const b0 = seg(hd[0], hd[1], hd[2] + Math.PI, 14), tp = seg(hd[0], hd[1], hd[2], 40); sline([b0[0], b0[1], tp[0], tp[1]], 3.5, '#5a5a6a'); ctx.fillStyle = '#3ad0c8'; circle(tp[0], tp[1], 4.5); }
     else { ctx.fillStyle = 'rgba(255,255,255,0.35)'; circle(hd[0], hd[1], c.wide ? 11 : 8); }
-    if (c.punch && atk > 0.15 && atk < 0.7){ ctx.globalAlpha = 1 - atk; for (let k = 0; k < 3; k++) sline([hd[0] + 4, hd[1] - 4 + k * 4, hd[0] - 14 + k * 3, hd[1] - 4 + k * 4], 2.5, h.elem); ctx.globalAlpha = 1; }
-    else if (!c.punch && atk > 0.12 && atk < 0.8){ ctx.globalAlpha = 1 - atk; ctx.strokeStyle = h.elem; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(sx, sy, c.wide ? 58 : 50, -1.7, -1.7 + atk * 2.6); ctx.stroke(); ctx.globalAlpha = 1; }
+    if ((c.punch || o.punch === 1) && atk > 0.15 && atk < 0.7){ ctx.globalAlpha = 1 - atk; for (let k = 0; k < 3; k++) sline([hd[0] + 4, hd[1] - 4 + k * 4, hd[0] - 14 + k * 3, hd[1] - 4 + k * 4], 2.5, h.elem); ctx.globalAlpha = 1; }
+    else if (!c.punch && !o.punch && atk > 0.12 && atk < 0.8){ ctx.globalAlpha = 1 - atk; ctx.strokeStyle = h.elem; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(sx, sy, c.wide ? 58 : 50, -1.7, -1.7 + atk * 2.6); ctx.stroke(); ctx.globalAlpha = 1; }
   }
   if (o.kick && o.kick !== 'foot'){ const ft = seg(2, hy, lf[0], 36), kg = ctx.createRadialGradient(ft[0], ft[1], 1, ft[0], ft[1], 20); kg.addColorStop(0, '#fff'); kg.addColorStop(0.4, h.elem); kg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = kg; circle(ft[0], ft[1], 20); }
 }
@@ -1780,7 +1793,7 @@ function drawPlayer(p){
       drawHero(p.hero, sx - p.facing * k * (kick === 'dive' ? 14 : 26), p.y - (kick === 'dive' ? k * 28 : 0), { facing: p.facing, t: p.t, kick });
     }
     ctx.globalAlpha = p.inv > 0 && !kick && Math.floor(p.inv * 14) % 2 === 0 ? 0.35 : 1;
-    drawHero(p.hero, sx, p.y, { facing: p.facing, t: p.t, walk: p.walk, air: !p.onGround, kick, atk: p.atkT > 0 ? 1 - p.atkT / 0.28 : undefined, pose: p.shootT > 0 && p.atkT <= 0 && !kick ? 'special' : undefined });
+    drawHero(p.hero, sx, p.y, { facing: p.facing, t: p.t, walk: p.walk, air: !p.onGround, kick, atk: p.atkT > 0 ? 1 - p.atkT / 0.28 : undefined, punch: p.punchy, cart: p.cartT > 0 ? 1 - p.cartT / LK_CART : undefined, pose: p.shootT > 0 && p.atkT <= 0 && !kick ? 'special' : undefined });
     if (p.kickHold > 0.1){ ctx.fillStyle = 'rgba(255,255,255,' + Math.min(0.6, p.kickHold * 1.5) + ')'; circle(sx + p.facing * 12, p.y - 8, 5 + p.kickHold * 30); }
     ctx.globalAlpha = 1;
   }
@@ -2582,7 +2595,7 @@ function drawFHero(h){
   const walk = h.state === 'idle' && h.onGround && Math.abs(h.vx) > 10 && !h.atk;
   const air = !h.onGround && !kick && pose !== 'down' && pose !== 'hurt';
   ctx.globalAlpha = h.inv > 0 && h.state !== 'ko' && Math.floor(h.inv * 14) % 2 === 0 ? 0.5 : 1;
-  drawHero(h.hero, h.x, h.y, { s: HS, facing: h.facing, t: h.t, walk, air, atk, kick, pose: walk || kick || atk !== undefined || air ? undefined : pose });
+  drawHero(h.hero, h.x, h.y, { s: HS, facing: h.facing, t: h.t, walk, air, atk, kick, punch: h.punchy, cart: h.atk && h.atk.type === 'kick' && h.lkCart ? Math.min(1, h.atk.t / h.atk.a.dur) : undefined, pose: walk || kick || atk !== undefined || air ? undefined : pose });
   ctx.globalAlpha = 1;
   if (h.state === 'block'){ ctx.globalAlpha = 0.35 + Math.sin(time * 20) * 0.1; ctx.strokeStyle = h.hero.elem; ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(h.x + h.facing * 30, h.y - 90, 18, 60, 0, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
   if (numPlayers === 2 && h.state !== 'ko'){ ctx.fillStyle = PCOL[h.idx]; poly([h.x - 7, h.y - 182, h.x + 7, h.y - 182, h.x, h.y - 173]); txt('P' + (h.idx + 1), h.x, h.y - 193, 14, PCOL[h.idx]); }
@@ -3922,12 +3935,13 @@ const TBTN = [
   { x: 762, y: 290, r: 27, code: 'KeyT', label: 'TEAM', noRace: true },
   { x: 824, y: 280, r: 27, code: 'KeyR', label: 'DRAGON', noRace: true },
   { x: 886, y: 272, r: 27, code: 'KeyE', label: 'SHIP', noRace: true },
+  { x: 680, y: 494, r: 30, code: 'KeyV', label: 'WHEEL', noRace: true, lk: true },
 ];
 const RACE_LABEL = { KeyF: 'SHOOT', KeyH: 'ROCKET', KeyG: 'NITRO' };
 function touchControlsOn(){
   return touchUsed && !paused && !cutin && (state === 'play' || state === 'race' || (state === 'fight' && F && (F.phase === 'fight' || F.phase === 'finish')));
 }
-const visibleBtns = () => TBTN.filter(b => !(state === 'race' && b.noRace));
+const visibleBtns = () => TBTN.filter(b => !(state === 'race' && b.noRace) && !(b.lk && !(players[0] && players[0].hero.id === 'lukang')));
 const btnAt = p => visibleBtns().find(b => (p.x - b.x) ** 2 + (p.y - b.y) ** 2 < (b.r + 12) ** 2);
 function canvasPt(t){ const r = cv.getBoundingClientRect(); return { x: (t.clientX - r.left) * W / r.width, y: (t.clientY - r.top) * H / r.height }; }
 function goFullscreen(){
@@ -4545,6 +4559,7 @@ function clickables(){
   switch (state){
     case 'title': return [BTN1, BTN2, BTN_L];
     case 'select': return HERO_LIST.map((h, i) => CARD(i));
+    case 'luintro': return [LU_GO];
     case 'missions': return MISSIONS.map((m, i) => MCARD(i)).concat([MAP_BACK, DPILL(0), DPILL(1), DPILL(2)]);
     case 'gameover': return [GO_MAP];
   }
@@ -4599,6 +4614,197 @@ Object.assign(HY, {
   "L spin · O team · I dragon · U ship · ↓ block": "L պտույտ · O թիմ · I վիշապ · U նավ · ↓ պաշտպան",
   "Ninja Punch": "Նինջա բռունցք", "His own straight punch, from his video!": "Իր սեփական բռունցքի հարվածը՝ իր տեսանյութից!",
 });
+// ---------- Lu Kang: Vahan, drawn from his three videos ----------
+// red headband, red dragon paint on his arms, blue jeans, bare feet, nunchaku
+SUPER.lukang = { leg:'#8fb0d8', boot:'#e8b892', torso:'#e8b892', arm:'#e8b892', hand:'#e8b892', cuff:'#d42a3a', belt:'#6f8fbc', trunks:'#8fb0d8', head:'lukang', hair:'#1a1210', weapon:'nunchaku' };
+SHOT.lukang = { spd:700, r:9, dmg:1.3 };
+DRAGON_COL.lukang = ['#d42a3a', '#ffb03a']; BREATH_COL.lukang = ['#ff6a3a', '#ffb03a', '#ffffff'];
+VEH.lukang = ['car', '#d42a3a', '#1a1210']; ROCKET_WORD.lukang = 'WA-TAAH!';
+ANIMAL.lukang = 'dragon';
+NINJA_TEAM.push('lukang');
+NINJALITY.lukang = launchFx(['#ff3a4a', '#ffb03a'], 'WA-TAAH!');
+const drawSuperHeadLk = drawSuperHead;
+drawSuperHead = function(c, h){
+  if (c.head !== 'lukang'){ drawSuperHeadLk(c, h); return; }
+  // headband tails flap behind him
+  const w = Math.sin(time * 9) * 2.5;
+  sline([-8, -5, -14, -3 + w, -19, -1 - w], 2.4, '#b81e32'); sline([-8, -4, -13, 1 + w, -17, 4 - w], 2.2, '#d42a3a');
+  ctx.fillStyle = c.hair; ell(-2, -2, 9, 9.5);
+  ctx.fillStyle = h.skin; ell(1.5, 0.5, 8, 9);
+  ctx.fillStyle = shade(h.skin, 0.88); ell(-2.5, 0.5, 2, 2.8);
+  ctx.fillStyle = c.hair; ctx.beginPath(); ctx.moveTo(-9, 2); ctx.quadraticCurveTo(-11, -11, 0, -11); ctx.quadraticCurveTo(9, -11, 10.5, -5); ctx.lineTo(-4, -5); ctx.lineTo(-5, 3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#d42a3a'; poly([-9.6, -6.6, 10.4, -6, 10.2, -3, -9.4, -3.4]);
+  ctx.fillStyle = '#fff'; ell(6.2, -0.6, 1.5, 1.2); ctx.fillStyle = '#2a1a10'; circle(6.6, -0.6, 0.9);
+  sline([4.2, -2.4, 8.2, -1.8], 1.1, c.hair);
+  sline([3.4, 2.4, 6.6, 3.2], 1, '#d42a3a');
+  sline([6.4, 5, 8.8, 4.6], 1, '#a0584a');
+};
+// roll over the hip so a hand or a foot is always on the floor, like a real cartwheel
+const LK_PTS = [[0.6, 0, 36], [-0.6, 0, 36], [2.72, -23, 25], [3.56, -23, 25]].map(([a, y0, l]) => [Math.sin(a) * l, y0 + Math.cos(a) * l]);
+function lkCartPivot(u){
+  const th = u * Math.PI * 2, low = Math.max(...LK_PTS.map(([x, y]) => x * Math.sin(th) + y * Math.cos(th))) + 3;
+  ctx.translate(0, -low); ctx.rotate(th); ctx.translate(0, 36);
+}
+// game Lu Kang poses for the "his real moves" screen
+const LK_GUARD = { af: [1.0, 2.1], ab: [0.75, 2.2] };
+function drawLuKang(x, y, s, lf, lb, af, ab, lean, atk){
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  drawSuperHero(HERO.lukang, {}, time, lf, lb, af, ab, lean, -36, atk);
+  ctx.restore();
+}
+const LK_MOVES = [
+  { src: 'vahan1.mp4', name: 'Nunchaku' },
+  { src: 'vahan2.mp4', name: 'Fast Punches' },
+  { src: 'vahan3.mp4', name: 'Cartwheel' },
+];
+const LK_KEYS = [['Key F', 'Press F fast (or hold F)', 'Key V'], ['Key K', 'Press K fast (or hold K)', 'Key N']];
+const LK_TOUCH = ['ATTACK button', 'Tap ATTACK fast', 'WHEEL button'];
+const LU_GO = { x: W / 2 - 160, y: 424, w: 320, h: 54 };
+let luVids = null;
+function loadLuVideos(){
+  if (luVids) return;
+  luVids = LK_MOVES.map(m => {
+    const v = document.createElement('video');
+    v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+    v.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
+    document.body.appendChild(v);
+    const go = src => { v.src = src; v.load(); v.play().catch(() => {}); };
+    // same as Sargis's clip: fetch it whole so iPhones can play it
+    fetch(m.src).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
+      .then(b => go(URL.createObjectURL(new Blob([b], { type: 'video/mp4' })))).catch(() => go(m.src));
+    return v;
+  });
+}
+function drawLuMove(i, x, y, vw, vh){
+  const v = luVids && luVids[i];
+  txt(LK_MOVES[i].name, x + vw + 4, y - 34, 18, '#ffe14a', 'center', '#000', vw * 2);
+  // which key does it: the keys of whoever is playing Lu Kang
+  const keys = players.filter(q => q.hero.id === 'lukang').map(q => tr(touchUsed && q.idx === 0 ? LK_TOUCH[i] : LK_KEYS[q.idx][i]));
+  const kt = (numPlayers === 2 ? players.filter(q => q.hero.id === 'lukang').map((q, j) => 'P' + (q.idx + 1) + ': ' + keys[j]) : keys).join('   ');
+  ctx.font = 'bold 14px ' + FONT; const kw = Math.min(vw * 2 + 8, ctx.measureText(kt).width + 28);
+  ctx.fillStyle = '#14141c'; rr(x + vw + 4 - kw / 2, y - 24, kw, 20, 10); ctx.strokeStyle = '#ffe14a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x + vw + 4 - kw / 2, y - 24, kw, 20, 10); ctx.stroke();
+  txt(kt, x + vw + 4, y - 14, 14, '#ffe14a', 'center', '#000', vw * 2 - 4);
+  // real video, mirrored so he faces the same way as in the game
+  ctx.fillStyle = '#ff5a6a'; rr(x - 3, y - 3, vw + 6, vh + 26, 10); ctx.fillStyle = '#000'; ctx.fillRect(x, y, vw, vh);
+  if (v && v.readyState >= 2 && v.videoWidth){
+    const sw = v.videoWidth, sh = v.videoHeight, want = vw / vh;
+    let cw = sw, ch = sh; if (sw / sh > want) cw = sh * want; else ch = sw / want;
+    ctx.save(); ctx.translate(x + vw, y); ctx.scale(-1, 1); ctx.drawImage(v, (sw - cw) / 2, (sh - ch) / 2, cw, ch, 0, 0, vw, vh); ctx.restore();
+  } else txt('▶', x + vw / 2, y + vh / 2, 36, '#ff5a6a');
+  txt('Real Vahan', x + vw / 2, y + vh + 11, 12, '#2a0008', 'center', '#ff5a6a', vw - 6);
+  // game Lu Kang doing the same move
+  const bx = x + vw + 8, fl = y + vh - 26;
+  ctx.fillStyle = '#ffe14a'; rr(bx - 3, y - 3, vw + 6, vh + 26, 10);
+  ctx.save(); ctx.beginPath(); ctx.rect(bx, y, vw, vh); ctx.clip();
+  const bg = ctx.createLinearGradient(0, y, 0, fl); bg.addColorStop(0, '#24080e'); bg.addColorStop(1, '#5a1a2a'); ctx.fillStyle = bg; ctx.fillRect(bx, y, vw, vh);
+  ctx.fillStyle = '#3a2618'; ctx.fillRect(bx, fl, vw, vh); ctx.fillStyle = '#4a321f'; ctx.fillRect(bx, fl, vw, 4);
+  const s = 1.9, cx = bx + vw / 2 - 8;
+  if (i === 0){
+    // nunchaku: whip it round and round
+    const a = (time * 1.6) % 1;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ell(cx, fl + 2, 30, 5);
+    ctx.save(); ctx.translate(cx, fl); ctx.scale(s, s); drawHero(HERO.lukang, 0, 0, { s: 1, t: time, atk: a }); ctx.restore();
+    if (a > 0.3 && a < 0.6) txt('WA-TAAH!', bx + vw / 2, y + 24, 22, '#ff5a6a', 'center', '#000', vw - 8);
+  } else if (i === 1){
+    // fast punches: left, right, left, right
+    const ph = (time * 4) % 2, front = ph < 1, u = Math.sin((ph % 1) * Math.PI);
+    const af = front ? [1.0 + u * 0.57, 2.1 - u * 2.1] : LK_GUARD.af, ab = front ? LK_GUARD.ab : [0.75 + u * 0.82, 2.2 - u * 2.2];
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ell(cx, fl + 2, 30, 5);
+    drawLuKang(cx, fl, s, [0.42, 0.5], [-0.42, 0.3], af, ab, 0.08 + u * 0.04, undefined);
+    if (u > 0.7){ ctx.globalAlpha = (u - 0.7) / 0.3; for (let k = 0; k < 3; k++) sline([cx + 50, fl - (60 - k * 5) * s * 0.6 - 30, cx + 30 - k * 4, fl - (60 - k * 5) * s * 0.6 - 30], 2.5, '#ff5a6a'); ctx.globalAlpha = 1; }
+    txt(front ? 'POW!' : 'BAM!', bx + vw / 2, y + 24, 22, '#ffe14a', 'center', '#000', vw - 8);
+  } else {
+    // cartwheel across the room, then land in his fighting stance
+    const p = (time % 2.6) / 1.3;
+    if (p < 1){
+      const u = p * p * (3 - 2 * p), hx = bx + 26 + u * (vw - 52);
+      ctx.save(); ctx.translate(hx, fl); ctx.scale(s * 0.85, s * 0.85); lkCartPivot(u);
+      drawSuperHero(HERO.lukang, {}, time, [0.6, 0], [-0.6, 0], [2.72, 0], [3.56, 0], 0, -36, undefined);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ell(bx + vw - 50, fl + 2, 30, 5);
+      drawLuKang(bx + vw - 54, fl, s, [0.55, 0.6], [-0.5, 0.4], [1.1, 2.3], [0.8, 2.3], 0.1, undefined);
+      txt('READY!', bx + vw / 2, y + 24, 22, '#ffe14a', 'center', '#000', vw - 8);
+    }
+  }
+  ctx.restore();
+  txt('Game Lu Kang', bx + vw / 2, y + vh + 11, 12, '#2a1a00', 'center', '#ffe14a', vw - 6);
+}
+function drawLuIntro(){
+  drawBackground(LEVELS[1], time * 20); drawDarkness(0.5);
+  txt('Lu Kang is Vahan! His real moves are in the game', W / 2, 22, 24, '#ffe14a', 'center', '#000', W - 40);
+  const vw = 144, vh = 290;
+  for (let i = 0; i < 3; i++) drawLuMove(i, 18 + i * 316, 80, vw, vh);
+  ctx.fillStyle = '#2fd06a'; rr(LU_GO.x, LU_GO.y, LU_GO.w, LU_GO.h, 14);
+  txt('Choose your mission ▶', W / 2, LU_GO.y + LU_GO.h / 2, 22, '#fff', 'center', '#0a3a1a', LU_GO.w - 20);
+  txt(touchUsed ? 'Tap the button' : 'Press Space or Enter', W / 2, 500, 14, '#cfe8ff');
+}
+function updateLuIntro(){
+  loadLuVideos();
+  if (pressed.Escape){ state = 'select'; sel.done = [false, numPlayers < 2]; return; }
+  if (inBtn(LU_GO, clicked) || confirmP()){ luVids.forEach(v => v.pause()); toMissions(); return; }
+  if (clicked) luVids.forEach(v => { if (v.paused) v.play().catch(() => {}); });
+}
+// press F again quickly and the nunchaku turn into fast punches, left, right, left, right
+const lkCombo = q => { const c = time - (q.lkLast === undefined ? -9 : q.lkLast) < 0.6; q.lkLast = time; return c; };
+const doAttackLk = doAttack;
+doAttack = function(p){
+  doAttackLk(p);
+  p.punchy = p.hero.id === 'lukang' && lkCombo(p) ? 1 + p.swing % 2 : 0;
+  if (p.punchy) p.atkCd = 0.18;
+};
+const startHeroAttackLk = startHeroAttack;
+startHeroAttack = function(h, type){
+  startHeroAttackLk(h, type);
+  h.punchy = type === 'slash' && h.hero.id === 'lukang' && lkCombo(h) ? 1 + (h.lkN = (h.lkN || 0) + 1) % 2 : 0;
+  if (h.punchy) h.cd = 0.2;
+  h.lkCart = false;
+};
+// his cartwheel has its own key (V, or N for player 2): he rolls forward and knocks enemies over on the way
+const LK_CART = 0.75;
+const cartPressed = i => ((numPlayers === 1 && i === 0) ? CONTROLS : [CONTROLS[i]]).some(c => c.cart.some(k => pressed[k]));
+const updatePlayerLk = updatePlayer;
+updatePlayer = function(p, dt){
+  if (p.hero.id === 'lukang'){
+    if (p.cartT > 0){
+      if (p.down || p.dragonT > 0) p.cartT = 0;
+      else {
+        p.cartT -= dt; p.x += p.facing * 300 * dt;
+        const hb = { x1: p.x - 40, x2: p.x + 40, y1: p.y - 80, y2: p.y + 4 };
+        for (const e of enemies) if (!e.dead && e.kk !== p.cartId && overlap(hb, boxOf(e))){ e.kk = p.cartId; hitEnemy(e, 1.5, p.facing, p, p.hero.id); if (!e.boss && !e.heavy) e.vx = p.facing * 420; }
+      }
+    } else if (cartPressed(p.idx) && !p.down && !(p.dragonT > 0) && !(p.spinT > 0) && !(p.kickT > 0) && !paused && !cutin){
+      p.cartT = LK_CART; p.kickId++; p.cartId = p.idx + 'c' + p.kickId; SFX.swing();
+    }
+  }
+  updatePlayerLk(p, dt);
+};
+const updateFHeroLk = updateFHero;
+updateFHero = function(h, dt, control){
+  if (control && h.hero.id === 'lukang' && !h.atk && h.state === 'idle' && !(h.spinT > 0) && !(h.dragonT > 0) && !(h.teamT > 0) && cartPressed(h.idx)){
+    startHeroAttack(h, 'kick'); h.lkCart = true; h.vx = h.facing * 320;
+  }
+  updateFHeroLk(h, dt, control);
+};
+const keyHintLinesLk = keyHintLines;
+keyHintLines = function(){
+  const out = keyHintLinesLk();
+  if (state !== 'race') players.forEach((p, i) => { if (p.hero.id === 'lukang') out.push([i === 0 ? 'Lu Kang:  V cartwheel' : 'Lu Kang:  N cartwheel', i]); });
+  return out;
+};
+const startGameLk = startGame;
+startGame = function(){
+  startGameLk();
+  if (sel.pick.slice(0, numPlayers).includes('lukang')){ state = 'luintro'; SFX.clear(); }
+};
+Object.assign(HY, {
+  "Lu Kang": "Լու Կանգ", "LU KANG": "ԼՈՒ ԿԱՆԳ", "The Dragon Fist": "Վիշապի բռունցքը", "Nunchaku": "Նունչակու",
+  "Nunchaku, fast punches and a cartwheel, from his videos!": "Նունչակու, արագ հարվածներ և աստղիկ՝ իր տեսանյութերից!",
+  "Fast Punches": "Արագ հարվածներ", "Cartwheel": "Աստղիկ", "Real Vahan": "Իսկական Վահանը", "Game Lu Kang": "Խաղի Լու Կանգը",
+  "Lu Kang is Vahan! His real moves are in the game": "Լու Կանգը Վահանն է։ Նրա իսկական շարժումները խաղում են",
+  "Choose your mission ▶": "Ընտրիր առաքելությունը ▶", "Tap the button": "Հպիր կոճակին", "Press Space or Enter": "Սեղմիր Space կամ Enter",
+  "READY!": "ՊԱՏՐԱՍՏ!", "Key F": "F ստեղն", "Key K": "K ստեղն", "Key V": "V ստեղն", "Key N": "N ստեղն", "Press F fast (or hold F)": "Արագ սեղմիր F (կամ պահիր F)", "Press K fast (or hold K)": "Արագ սեղմիր K (կամ պահիր K)", "ATTACK button": "ATTACK կոճակ", "Tap ATTACK fast": "Արագ հպիր ATTACK", "WHEEL button": "ԱՍՏՂԻԿ կոճակ", "Lu Kang:  V cartwheel": "Լու Կանգ՝  V աստղիկ", "Lu Kang:  N cartwheel": "Լու Կանգ՝  N աստղիկ", "WHEEL": "ԱՍՏՂԻԿ",
+});
 // ---------- main loop ----------
 let last = performance.now();
 function frame(now){
@@ -4608,6 +4814,7 @@ function frame(now){
   switch (state){
     case 'title': updateTitle(); break;
     case 'select': updateSelect(); break;
+    case 'luintro': updateLuIntro(); break;
     case 'missions': updateMissions(); break;
     case 'results': updateResults(dt); break;
     case 'play': updatePlay(dt); break;
@@ -4623,6 +4830,7 @@ function frame(now){
   switch (state){
     case 'title': drawTitle(); break;
     case 'select': drawSelect(); break;
+    case 'luintro': drawLuIntro(); break;
     case 'missions': drawMissions(); break;
     case 'results': drawResults(); break;
     case 'play': drawWorld(); drawHUD();
