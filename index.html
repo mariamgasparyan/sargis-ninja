@@ -214,6 +214,7 @@ const Music = {
 // ---------- heroes ----------
 const HERO_LIST = [
   { id:'sargis', name:'Sargis', title:'The Real Ninja', color:'#1c1c22', dark:'#0e0e12', belt:'#1c1c22', armor:'#2fd06a', elem:'#3dff8a', skin:'#f1c9a6', hair:'#5a3a22', power:'Ninja Punch', desc:'His own straight punch, from his video!' },
+  { id:'sargistennis', name:'Tennis Sargis', title:'Tennis Champion', color:'#f4f4f4', dark:'#1f6a3a', belt:'#2fd06a', armor:'#2fd06a', elem:'#d8ff3a', skin:'#f1c9a6', hair:'#5a3a22', power:'Tennis Balls', desc:"Sargis's second mode: racket hits and tennis ball shots!" },
   { id:'lukang', name:'Lu Kang', title:'The Dragon Fist', color:'#e8b892', dark:'#3a5a8a', belt:'#d42a3a', armor:'#d42a3a', elem:'#ff4a5a', skin:'#e8b892', hair:'#1a1210', power:'Nunchaku', desc:'Nunchaku, fast punches and a cartwheel, from his videos!' },
   { id:'areg', name:'Areg', title:'The Speed Fist', color:'#a9b0b3', dark:'#3a5a7a', belt:'#2a2a30', armor:'#a9b0b3', elem:'#7ad0ff', skin:'#efc8a8', hair:'#4a2c1a', power:'Speed Punches', desc:'His own fast punches, from his video!' },
   { id:'monte', name:'Monte', title:'The Future Ninja', color:'#c0262e', dark:'#6a1016', belt:'#a01e24', armor:'#c0262e', elem:'#ff4a3a', skin:'#efc8a8', hair:'#3a2416', power:'Future Blast', desc:'In his red THE FUTURE hoodie, from his photo!' },
@@ -241,7 +242,7 @@ const HERO_LIST = [
   { id:'pixal', name:'Pixal', title:'Nindroid Ninja', color:'#c8d0d8', dark:'#4a5460', belt:'#3aff9a', armor:'#3aff9a', elem:'#3aff9a', skin:'#d8dee4', power:'Data Laser', desc:'Fast robot lasers!' },
 ];
 // mixed order for the select screen, so ninjas, superheroes and girl heroes are spread across every row
-const HERO_ORDER = ['sargis', 'lukang', 'areg', 'monte', 'lloyd', 'elsa', 'batman', 'nya', 'spidey', 'ladybug', 'kai', 'pikachu', 'wonder', 'zane', 'hulk', 'moana', 'sponge', 'marvel', 'raph', 'gwen', 'wu', 'ironman', 'pixal', 'superman', 'rabbid', 'sora'];
+const HERO_ORDER = ['sargis', 'sargistennis', 'lukang', 'areg', 'monte', 'lloyd', 'elsa', 'batman', 'nya', 'spidey', 'ladybug', 'kai', 'pikachu', 'wonder', 'zane', 'hulk', 'moana', 'sponge', 'marvel', 'raph', 'gwen', 'wu', 'ironman', 'pixal', 'superman', 'rabbid', 'sora'];
 HERO_LIST.sort((a, b) => HERO_ORDER.indexOf(a.id) - HERO_ORDER.indexOf(b.id));
 const HERO = {}; HERO_LIST.forEach(h => HERO[h.id] = h);
 const PCOL = ['#ffe14a', '#5ff3ff'];
@@ -638,11 +639,13 @@ function drawSuperHero(h, o, t, lf, lb, af, ab, lean, hy, atk){
   }
   ctx.save(); ctx.translate(headX, headY); ctx.rotate(lean * 0.6); drawSuperHead(c, h); ctx.restore();
   const hd = arm(sx + 2, sy, af[0], af[1], c.arm, c.hand, c.wide, c.cuff || null);
+  if (c.weapon === 'racket') drawRacket(hd);
   if (atk !== undefined){
     if (c.weapon === 'sword'){ const p1 = seg(hd[0], hd[1], hd[2], 6), p2 = seg(hd[0], hd[1], hd[2], 40); sline([hd[0], hd[1], p1[0], p1[1]], 3.5, '#8a6a1a'); sline([p1[0], p1[1], p2[0], p2[1]], 3.4, '#dfe6ee'); }
     else if (c.weapon === 'oar'){ const b0 = seg(hd[0], hd[1], hd[2] + Math.PI, 12), tp = seg(hd[0], hd[1], hd[2], 34); sline([b0[0], b0[1], tp[0], tp[1]], 3, '#8a5a2a'); ctx.save(); ctx.translate(tp[0], tp[1]); ctx.rotate(-hd[2]); ctx.fillStyle = '#8a5a2a'; ell(0, 7, 4.5, 10); ctx.restore(); }
     else if (c.weapon === 'yoyo'){ const tp = seg(hd[0], hd[1], hd[2], 34); sline([hd[0], hd[1], tp[0], tp[1]], 1, '#dddddd'); ctx.fillStyle = '#d42a2a'; circle(tp[0], tp[1], 6); ctx.fillStyle = '#111'; circle(tp[0] - 2, tp[1] - 2, 1.4); circle(tp[0] + 2, tp[1] + 1.5, 1.4); }
     else if (c.weapon === 'nunchaku' && !o.punch){ const p1 = seg(hd[0], hd[1], hd[2], 11), a2 = hd[2] - 1.4 + Math.sin(atk * 12) * 0.8, c1 = seg(p1[0], p1[1], a2, 4), p2 = seg(c1[0], c1[1], a2, 11); sline([hd[0], hd[1], p1[0], p1[1]], 3.4, '#2a1a10'); sline([p1[0], p1[1], c1[0], c1[1]], 1.2, '#c8c8d0'); sline([c1[0], c1[1], p2[0], p2[1]], 3.4, '#2a1a10'); }
+    else if (c.weapon === 'racket'){}
     else if (c.weapon === 'staff'){ const b0 = seg(hd[0], hd[1], hd[2] + Math.PI, 14), tp = seg(hd[0], hd[1], hd[2], 40); sline([b0[0], b0[1], tp[0], tp[1]], 3.5, '#5a5a6a'); ctx.fillStyle = '#3ad0c8'; circle(tp[0], tp[1], 4.5); }
     else { ctx.fillStyle = 'rgba(255,255,255,0.35)'; circle(hd[0], hd[1], c.wide ? 11 : 8); }
     if ((c.punch || o.punch === 1) && atk > 0.15 && atk < 0.7){ ctx.globalAlpha = 1 - atk; for (let k = 0; k < 3; k++) sline([hd[0] + 4, hd[1] - 4 + k * 4, hd[0] - 14 + k * 3, hd[1] - 4 + k * 4], 2.5, h.elem); ctx.globalAlpha = 1; }
@@ -5147,6 +5150,57 @@ Object.assign(HY, {
   "Choose with the arrows (or A D W S) and press F, Space or Enter  ·  ESC = back": "Ընտրիր սլաքներով (կամ A D W S) և սեղմիր F, Space կամ Enter  ·  ESC = ետ",
   "So you want to fight me? Let's see who is the best hero!": "Ուզում ես ինձ հետ կռվե՞լ։ Տեսնենք՝ ով է լավագույն հերոսը!", "Ready when you are!": "Ես պատրաստ եմ!",
   "pick any hero": "ընտրիր ցանկացած հերոս",
+});
+// ---------- Tennis Sargis: Sargis's second mode, a tennis player with a racket and tennis balls ----------
+SUPER.sargistennis = { leg:'#1f3a6a', boot:'#f4f4f4', torso:'#f4f4f4', arm:'#f1c9a6', hand:'#f1c9a6', cuff:'#2fd06a', head:'sargistennis', hair:'#5a3a22', emblem:'polo', weapon:'racket' };
+SHOT.sargistennis = { spd:720, r:8, dmg:1.3 };
+DRAGON_COL.sargistennis = ['#f4f4f4', '#c8ff3a']; BREATH_COL.sargistennis = ['#d8ff3a', '#f4ff9a', '#ffffff'];
+VEH.sargistennis = ['car', '#f4f4f4', '#2fd06a']; ROCKET_WORD.sargistennis = 'ACE!';
+ANIMAL.sargistennis = 'biglion';
+NINJA_TEAM.push('sargistennis');
+NINJALITY.sargistennis = launchFx(['#d8ff3a', '#ffffff'], 'ACE!');
+SIG.sargistennis = 'shoot';
+function drawRacket(hd){
+  const a = hd[2], hx = hd[0], hy = hd[1], top = seg(hx, hy, a, 11), mid = seg(hx, hy, a, 21);
+  sline([hx, hy, top[0], top[1]], 2.6, '#222');
+  ctx.save(); ctx.translate(mid[0], mid[1]); ctx.rotate(Math.PI / 2 - a);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.ellipse(0, 0, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 0.5;
+  for (let k = -6; k <= 6; k += 3) line(k, -Math.sqrt(Math.max(0, 49 - k * k * 0.49)), k, Math.sqrt(Math.max(0, 49 - k * k * 0.49)));
+  for (let k = -4; k <= 4; k += 2.5) line(-Math.sqrt(Math.max(0, 100 - k * k * 2.04)), k, Math.sqrt(Math.max(0, 100 - k * k * 2.04)), k);
+  ctx.strokeStyle = '#2fd06a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, 0, 10, 7, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+function drawTennisBall(x, y, r, t){
+  ctx.fillStyle = '#d8ff3a'; circle(x, y, r);
+  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, r * 0.22); const sp = t * 12;
+  ctx.beginPath(); ctx.arc(x - r * 0.9, y, r * 0.7, -0.9 + sp, 0.9 + sp); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x + r * 0.9, y, r * 0.7, Math.PI - 0.9 + sp, Math.PI + 0.9 + sp); ctx.stroke();
+}
+const drawShotTn = drawShot;
+drawShot = function(kind, x, y, r, dir, t){
+  if (kind !== 'sargistennis'){ drawShotTn(kind, x, y, r, dir, t); return; }
+  ctx.globalAlpha = 0.35; for (let k = 1; k <= 3; k++) { ctx.fillStyle = '#d8ff3a'; circle(x - (dir || 1) * k * r * 1.1, y, r * (1 - k * 0.2)); } ctx.globalAlpha = 1;
+  drawTennisBall(x, y, r, t);
+};
+const drawSuperHeadTn = drawSuperHead;
+drawSuperHead = function(c, h){
+  if (c.head !== 'sargistennis'){ drawSuperHeadTn(c, h); return; }
+  drawSuperHeadTn(Object.assign({}, c, { head: 'sargis' }), h);
+  // white sweatband with a green stripe
+  ctx.fillStyle = '#f4f4f4'; poly([-9.6, -6.8, 10.4, -6.2, 10.2, -3.4, -9.4, -3.8]);
+  sline([-9.4, -5.2, 10.2, -4.7], 0.9, '#2fd06a');
+};
+const drawEmblemTn = drawEmblem;
+drawEmblem = function(c){
+  if (c.emblem !== 'polo'){ drawEmblemTn(c); return; }
+  ctx.fillStyle = '#2fd06a'; poly([-4, -28, 2, -21, 8, -28, 5.5, -28, 2, -23.5, -1.5, -28]);
+  ctx.fillStyle = '#d8ff3a'; circle(7, -17, 1.8);
+  sline([-9.5, -1, 11, -1], 1.2, '#2fd06a');
+};
+Object.assign(HY, {
+  "Tennis Sargis": "Թենիսիստ Սարգիս", "TENNIS SARGIS": "ԹԵՆԻՍԻՍՏ ՍԱՐԳԻՍ", "Tennis Champion": "Թենիսի չեմպիոն", "Tennis Balls": "Թենիսի գնդակներ",
+  "Sargis's second mode: racket hits and tennis ball shots!": "Սարգիսի երկրորդ ռեժիմը՝ ռակետի հարվածներ և թենիսի գնդակներ!",
 });
 // ---------- main loop ----------
 let last = performance.now();
