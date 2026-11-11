@@ -3,3 +3,5 @@
 *.mov
 sargis-chop.mp4
 .DS_Store
+# original photos (they hold GPS location) stay private
+Monte.jpeg
